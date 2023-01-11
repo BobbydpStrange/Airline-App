@@ -1,0 +1,120 @@
+﻿@page "/maintenance/config"
+@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+@attribute [Authorize(Roles = "Admin")]
+<h3>Maintenance Policy Config</h3>
+@if (Policies.Count > 0)
+{
+    @if (isEditing)
+    {
+        <button class="btn btn-primary" onclick=@updateConfig>
+            Save Config
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary" onclick=@toggleIsEditing>
+            Edit Config
+        </button>
+    }
+    
+    <table class="table">
+    <thead>
+        <tr>
+            <th>
+                Maintenance Type
+            </th>
+            <th>
+                # Flights Before Required
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var p in Policies)
+    {
+        @if (isEditing)
+        {
+            <tr>
+                <td>@p.MaintType</td>
+                <td>
+    <EditForm EditContext="editContext">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                    <InputNumber @bind-Value=p.MaintFlightPolicy></InputNumber>
+    </EditForm> 
+                </td>
+                <td>
+                    <button class="btn btn-danger" @onclick="()=>deleteType(p)" >Delete</button>
+                </td>
+            </tr>     
+                
+        }
+        else
+        {
+            <tr>
+                <td>@p.MaintType</td>
+                <td>@p.MaintFlightPolicy</td>
+            </tr>
+        }             
+    }
+    </tbody>
+    </table>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+
+@code {
+
+    public List<MaintenanceType> Policies { get; set; } = new();
+
+    private EditContext editContext;
+
+    private bool isEditing = false;
+    public void toggleIsEditing()
+    {
+        isEditing = !isEditing;
+        StateHasChanged();
+    }
+
+    public async void updateConfig()
+    {
+        foreach (var p in Policies)
+        {
+            await mservice.UpdateMaintenanceType(new MaintenanceTypeEdit() {
+                    Id = p.Id,
+                    MaintType = p.MaintType,
+                    MaintFlightPolicy = p.MaintFlightPolicy
+            });
+        }
+        toggleIsEditing();
+        StateHasChanged();
+
+    }
+
+    public async void deleteType(MaintenanceType type)
+    {
+        await mservice.DeleteMaintenanceType(type.Id);
+        Policies.Remove(type);
+        StateHasChanged();
+    }
+
+    public int NewFlightPolicy { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Policies);
+        Policies = await mservice.GetMaintenanceTypes();
+        StateHasChanged();
+    }
+
+    public class PolicyModel
+    {
+        
+    }
+
+}

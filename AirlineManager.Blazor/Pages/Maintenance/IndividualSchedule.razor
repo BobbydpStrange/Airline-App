@@ -1,0 +1,102 @@
+﻿@page "/maintenance/individual/schedule"
+@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+@inject AuthenticationStateProvider AuthState;
+@inject IMaintenanceDataService mservice;
+@attribute [Authorize]
+
+<h3>Individual Mechanic</h3>
+@if (CurrentPerson != null)
+{
+<div class="form-check">
+            @if (selectedEmailPref)
+            {
+                <input class="form-check-input" type="checkbox" @onclick=updatePersonPreference id="flexCheckDefault" checked />
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" @onclick=updatePersonPreference id="flexCheckDefault"/>
+            }
+    <label class="form-check-label" for="flexCheckDefault">Would you like to receive email updates?</label>
+</div>
+@if (Main != null)
+{
+    @if (Main.Count > 0)
+    {
+        <table class="table">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Mechanic</th>
+                    <th scope="col">Airplane</th>
+                    <th scope="col">Maintenance type</th>
+                    <th scope="col">assigned</th>
+                    <th scope="col">completed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Main)
+                {
+                
+                        <tr scope="row">
+                            <td>@entry.Mechanic.People.Firstname @entry.Mechanic.People.Lastname</td>
+                            <td>@entry.Airplane.TailNumber</td>
+                            <td>@entry.MaintenanceType.MaintType</td>
+                            <td>@entry.Assigned</td>
+                            <td>@entry.Completed</td>
+                        </tr>
+              
+
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No maintenance scheduled</p>
+    }
+
+}
+else
+{
+    <p>Page is loading...</p>
+    }
+}
+else
+{
+    <p>No maintenance scheduled</p>
+}
+
+
+@code {
+    public List<Maintenance> Main { get; set; }
+
+    public Person CurrentPerson { get; set; }
+
+    bool selectedEmailPref;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var userEmail = state.User.Claims
+                    .Where(c => c.Type.Equals("email"))
+                    .Select(c => c.Value)
+                    .FirstOrDefault() ?? string.Empty;
+        CurrentPerson = await mservice.GetPersonByEmail(userEmail);
+        if (CurrentPerson != null)
+            selectedEmailPref = CurrentPerson.EmailPreference;
+        StateHasChanged();
+        var maintenances = await mservice.GetMaintenance();
+        if (CurrentPerson != null)
+            Main = maintenances.Where(m => m.Mechanic.People.Email == CurrentPerson.Email).ToList();
+        StateHasChanged();
+    }
+
+    public async void updatePersonPreference()
+    {
+
+        CurrentPerson.EmailPreference = !selectedEmailPref;
+        await mservice.UpdatePerson(CurrentPerson);
+        StateHasChanged();
+    }
+}

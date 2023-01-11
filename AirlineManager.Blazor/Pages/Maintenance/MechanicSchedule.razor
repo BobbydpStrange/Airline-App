@@ -1,0 +1,58 @@
+﻿@page "/maintenance/mechanic/schedule"
+@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+@attribute [Authorize]
+
+<h3>Mechanic Schedule</h3>
+@if (Main != null)
+{
+    @if (Main.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Mechanic</th>
+                    <th scope="col">Airplane</th>
+                    <th scope="col">Maintenance type</th>
+                    <th scope="col">assigned</th>
+                    <th scope="col">completed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Main)
+                {
+                    <tr scope ="row">      
+                        <td>@entry.Mechanic.People.Firstname @entry.Mechanic.People.Lastname</td>
+                        <td>@entry.Airplane.TailNumber</td>
+                        <td>@entry.MaintenanceType.MaintType</td>
+                        <td>@entry.Assigned</td>
+                        <td>@entry.Completed</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else 
+    {
+        <p>No maintenance scheduled</p>
+    }
+    
+}
+else
+{
+    <p>Page is loading...</p>
+}
+
+@code {
+    //mechanics can see current assignments
+    //admin can see full schedule
+    public List<Maintenance> Main { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Main = await mservice.GetMaintenance();
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,78 @@
+﻿@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+
+
+
+
+<h4>
+    Certified Mechanics
+</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Employee Name
+            </th>
+            <th>
+                Certified to work on plane type:
+            </th>
+            <th>
+                Certification Expires
+            </th>
+        </tr>
+    </thead>
+
+    @if(certifiedMechanics != null)
+    {
+    <tbody>
+        @foreach(var m in certifiedMechanics)
+        {
+            
+        <tr>
+            <td>
+                @m.People.Firstname @m.People.Lastname
+            </td>
+            <td>
+                @m.AirplaneType.Manufacturer.ToUpper()
+            </td>
+            <td>
+                @m.CertDate.AddMonths(m.Cert.ExpirationMonths)
+            </td>
+            <td>
+                <button class="btn btn-primary" @onclick="()=>UpdateSelection(m)">
+                    Select
+                </button>
+            </td>
+        </tr>
+        } 
+    </tbody>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</table>
+
+
+
+@code {
+    [Parameter] public PlanesDueForMaintenance? Plane { get; set; }
+    [Parameter] public DateTime ScheduledDate { get; set; } = DateTime.Now;
+    [Parameter] public CertifiedMechanic SelectedMechanic { get; set; }
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private IEnumerable<CertifiedMechanic> certifiedMechanics { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        certifiedMechanics = await mservice.GetAvailableMechanicsAsync(
+            ScheduledDate, ScheduledDate.AddMinutes(Plane.EstTimeMinutes??0), Plane.Mainttypeid ?? 0, Plane.Planeid ?? 0);
+    }
+
+    async Task UpdateSelection(CertifiedMechanic mechanic)
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(mechanic));
+    }
+
+}

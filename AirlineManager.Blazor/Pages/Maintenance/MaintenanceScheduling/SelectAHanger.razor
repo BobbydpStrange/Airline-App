@@ -1,0 +1,71 @@
+﻿@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+
+
+
+
+<h4>
+    Hangers
+</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Hanger
+            </th>
+            <th>
+                Hanger Type
+            </th>
+        </tr>
+    </thead>
+
+    @if (hangers != null)
+    {
+        <tbody>
+            @foreach (var h in hangers)
+            {
+
+                <tr>
+                    <td>
+                        @h.Name
+                    </td>
+                    <td>
+                        @HangerTypes[h.HangerType - 1]
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="()=>UpdateSelection(h)">
+                            Select
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</table>
+
+
+
+@code {
+    [Parameter] public PlanesDueForMaintenance? Plane { get; set; }
+    [Parameter] public DateTime ScheduledDate { get; set; }
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private List<Hanger> hangers { get; set; }
+    public List<string> HangerTypes { get; set; } = new() { "Normal", "Emergency" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        hangers = (await mservice.GetHangersAsync())
+                .Where(h => h.HangerType == ((Plane.Isemergency ?? false) ? 2 : 1)).ToList();
+    }
+
+    async Task UpdateSelection(Hanger hanger)
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(hanger));
+    }
+
+}

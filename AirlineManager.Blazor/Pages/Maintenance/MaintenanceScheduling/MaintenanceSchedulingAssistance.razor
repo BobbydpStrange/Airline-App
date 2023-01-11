@@ -1,0 +1,186 @@
+﻿@page "/maintenance/scheduler"
+@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data;
+@inject IMaintenanceDataService mservice;
+
+<h3>Maintenance Scheduling</h3>
+@attribute [Authorize(Roles = "Admin, MaintenanceManager")]
+
+<div>
+    <div class="row">
+
+    <div class="col-lg-6 col-xl-6 p-3">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Schedule a Time</RadzenText>
+            <RadzenDatePicker TValue="DateTime?" InitialViewDate="DateTime.Now" ShowTime="true" Change=@(t => DateChanged(t)) HourFormat="12" DateFormat="MM/dd/yyyy h:mm tt" Class="w-100" />
+        </RadzenCard>
+    </div>
+
+    @if(SelectedPlane == null)
+    {
+        <div class="col-lg-6 col-xl-6 p-3">
+            <RadzenCard>
+                     <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Select A Plane</RadzenText>
+                     <RadzenButton Click="OpenPlaneSelectionModal">Select</RadzenButton>
+            </RadzenCard>
+        </div>
+    }
+    else
+    {
+        <div class="col-lg-6 col-xl-6 p-3">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">You Selected Plane #@SelectedPlane.TailNumber</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Maintenance Required: @SelectedPlane.MaintType</RadzenText>
+                <RadzenButton Click="OpenPlaneSelectionModal">Select A Different Plane</RadzenButton>
+            </RadzenCard>
+        </div>
+        <div class="col-lg-6 col-xl-6 p-3">
+                @if (SelectedHanger == null)
+                {
+
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Select A Hanger</RadzenText>
+                        <RadzenButton Click="OpenHangerSelectionModal">Select</RadzenButton>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">You Selected: @SelectedHanger.Name</RadzenText>
+                        <RadzenButton Click="OpenHangerSelectionModal">Select a Different Hanger</RadzenButton>
+                    </RadzenCard>
+                }
+            </div>
+        <div class="col-lg-6 col-xl-6 p-3">
+        @if (SelectedMechanic == null)
+        {
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Select A Mechanic</RadzenText>
+                <RadzenButton Click="OpenMechanicSelectionModal">Select</RadzenButton>
+            </RadzenCard>
+           
+        }
+        else
+        {
+            
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">You Selected: @SelectedMechanic.People.Firstname @SelectedMechanic.People.Lastname</RadzenText>
+                <RadzenButton Click="OpenMechanicSelectionModal">Select Someone Else</RadzenButton>
+            </RadzenCard>
+        }
+        </div>
+    }
+        @if(SelectedPlane != null && ScheduledDate != null && SelectedMechanic != null && SelectedHanger != null)
+        {
+
+            <div class="text-center">
+                <RadzenButton Click="AttemptToSchedule">Schedule Maintenance</RadzenButton>
+            </div>
+        }
+    </div>
+
+
+</div>
+@code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+    [Parameter] public PlanesDueForMaintenance SelectedPlane { get; set; }
+    public DateTime ScheduledDate { get; set; } = DateTime.Today;
+    [Parameter] public CertifiedMechanic SelectedMechanic { get; set; }
+    [Parameter] public Hanger SelectedHanger { get; set; }
+
+
+
+    public void DateChanged(DateTime? newTime)
+    {
+        ScheduledDate = newTime ?? DateTime.Now;
+        SelectedMechanic = null;
+        SelectedHanger = null;
+        StateHasChanged();
+    }
+
+    async void OpenPlaneSelectionModal()
+    {
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Large
+        };
+        var planeselection = Modal.Show<MaintenanceBacklogView>("Select A Plane", options);
+        var selection = await planeselection.Result;
+        if (selection.Confirmed)
+        {
+            SelectedPlane = selection.Data as PlanesDueForMaintenance;
+            SelectedMechanic = null;
+            SelectedHanger = null;
+        }
+        StateHasChanged();
+    }
+
+    async void OpenMechanicSelectionModal()
+    {
+        var options = new ModalOptions()
+        {
+            Size = ModalSize.Large
+        };
+        var parameters = new ModalParameters()
+            .Add("Plane", SelectedPlane)
+            .Add("ScheduledDate", ScheduledDate);
+
+        var mechselect = Modal.Show<SelectAMechanic>("Select A Plane", parameters, options);
+        var selection = await mechselect.Result;
+        if (selection.Confirmed)
+        {
+            SelectedMechanic = selection.Data as CertifiedMechanic;
+        }
+        StateHasChanged();
+    }
+
+    async void OpenHangerSelectionModal()
+    {
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.Large
+            };
+        var parameters = new ModalParameters()
+            .Add("Plane", SelectedPlane)
+            .Add("ScheduledDate", ScheduledDate);
+
+        var mechselect = Modal.Show<SelectAHanger>("Select A Hanger", parameters, options);
+        var selection = await mechselect.Result;
+        if (selection.Confirmed)
+        {
+            SelectedHanger = selection.Data as Hanger;
+        }
+        StateHasChanged();
+    }
+
+    async void AttemptToSchedule()
+    {
+        var newMaint = new NewMaintenance()
+            {
+                AirplaneId = SelectedPlane.Planeid ?? 0,
+                Assigned = ScheduledDate,
+                HangerId = SelectedHanger.Id,
+                MaintenanceTypeId = SelectedPlane.Mainttypeid ?? 0,
+                MechanicId = SelectedMechanic.Id
+            };
+        bool success = await mservice.AttemptToScheduleMaintenance(newMaint);
+        if (success)
+        {
+            ScheduledDate = DateTime.Now;
+            SelectedPlane = null;
+            SelectedHanger = null;
+            SelectedMechanic = null;
+            var parameters = new ModalParameters()
+            .Add("WasSuccess", true);
+
+            Modal.Show<Success>("Sucess", parameters);
+            StateHasChanged();
+        }
+        else
+        {
+            var parameters = new ModalParameters()
+            .Add("WasSuccess", false);
+            Modal.Show<Success>("Something Went Wrong", parameters);
+        }
+    }
+}

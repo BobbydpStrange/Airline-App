@@ -1,0 +1,92 @@
+name: Deploy Airline Manager App and Api
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  API_AZURE_WEBAPP_NAME: AirlineManagerAPI
+  BLAZOR_AZURE_WEBAPP_NAME: AirlineManagerBlazor
+  CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
+      - name: Build with dotnet
+        run: dotnet build --configuration ${{ env.CONFIGURATION }}
+
+      - name: Run unit tests
+        run: dotnet test
+
+      - name: Publish Web
+        run: dotnet publish AirlineManager.Blazor -c ${{ env.CONFIGURATION }} -o ${{env.DOTNET_ROOT}}/web
+
+      - name: Upload artifact for Web deployment job
+        uses: actions/upload-artifact@v2
+        with:
+          name: web
+          path: ${{env.DOTNET_ROOT}}/web
+
+      - name: Publish API
+        run: dotnet publish AirlineManager.API -c ${{ env.CONFIGURATION }} -o ${{env.DOTNET_ROOT}}/api
+
+      - name: Upload artifact for API deployment job
+        uses: actions/upload-artifact@v2
+        with:
+          name: api
+          path: ${{env.DOTNET_ROOT}}/api
+
+
+  deploy_web:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: web
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.BLAZOR_AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AirlineManagerBlazor_201F }}
+          package: .
+
+  deploy_api:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: api
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.API_AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AirlineManagerAPI_F563 }}
+          package: .

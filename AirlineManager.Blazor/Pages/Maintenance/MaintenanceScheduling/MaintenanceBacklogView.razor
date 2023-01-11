@@ -1,0 +1,100 @@
+﻿@using AirlineManager.Blazor.Services;
+@using AirlineManager.Shared.Data
+@inject IMaintenanceDataService mservice
+@inject NavigationManager nav;
+
+
+<h3>Planes In Need Of Maintenance</h3>
+@if (Planes != null)
+{
+    
+    @if(Planes.Count > 0)
+    {
+        <table class="table">
+            <thead>
+        <tr>
+                <th>
+                    Tail Number
+                </th>
+                <th>
+                    Manufacturer
+                </th>
+                <th>
+                    Maintenance Type
+                </th>
+                <th>
+                    Emergency
+                </th>
+                <th>
+                    Flights Since Last Service
+                </th>
+                <th>
+                    Last Serviced
+                </th>
+        </tr>
+    </thead>
+            <tbody>
+
+                @foreach (var p in Planes.Take(10))
+                {
+            <tr>
+                <td>
+                    @p.TailNumber
+                </td>
+                <td>
+                    @p.Manufacturer
+                </td>
+                <td>
+                    @p.MaintType
+                </td>
+                <td>
+                    @p.Isemergency
+                </td>
+                <td>
+                    @p.FlightsSinceLastService
+                </td>
+                <td>
+                    @p.LastServiced
+                </td>
+                <td>
+                    <button class="btn btn-primary" @onclick="()=>UpdateSelection(p)">
+                        Select
+                    </button>
+                </td>
+            </tr>
+        }
+                </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No planes are due for maintenance at this time.</p>
+        }
+    }
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    public List<PlanesDueForMaintenance> Planes { get; set; }
+
+    [Parameter]
+    public PlanesDueForMaintenance SelectedPlane { get; set; }
+    [Parameter]
+    public EventCallback<PlanesDueForMaintenance> SelectedPlaneChanged { get; set; }
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private async Task Cancel() => await BlazoredModal.CancelAsync();
+
+    private async Task UpdateSelection(PlanesDueForMaintenance plane)
+    {
+        await BlazoredModal.CloseAsync(ModalResult.Ok(plane));
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Planes = await mservice.GetPlanesDueForMaintenance();
+    }
+}

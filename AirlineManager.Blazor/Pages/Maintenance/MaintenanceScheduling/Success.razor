@@ -1,0 +1,19 @@
+﻿@if (WasSuccess)
+{
+<p>
+    Maintenance Scheduled!
+    </p>
+}
+else
+{
+    <p>
+        An error prevented this maintenance procedure from being scheduled!
+    </p>
+}
+
+@code {
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Parameter] public bool WasSuccess {get; set;}
+
+}
