@@ -16,16 +16,19 @@ namespace AirlineManager.API.Controllers
     [Authorize]
     public class MaintenanceController : ControllerBase
     {
+        private readonly ILogger<MaintenanceApp> _logger;
         private readonly MaintenanceApp maintenanceApp;
 
-        public MaintenanceController(MaintenanceApp maintenanceApp)
+        public MaintenanceController(ILogger<MaintenanceApp> logger, MaintenanceApp maintenanceApp)
         {
+            _logger = logger;
             this.maintenanceApp = maintenanceApp;
         }
         // GET: api/<MaintenanceController>
         [HttpGet ("maintenancetypes")]
         public IEnumerable<MaintenanceType> GetMaintenanceTypes()
         {
+            _logger.LogInformation("Getting maintenance types in API ");
             return maintenanceApp.GetMaintenanceTypes();
         }
 
@@ -50,6 +53,7 @@ namespace AirlineManager.API.Controllers
         [HttpGet("planesdue")]
         public IEnumerable<PlanesDueForMaintenance> GetPlanesDue()
         {
+            _logger.LogInformation("Getting planes due in API");
             return maintenanceApp.GetPlanesDue();
         }
 
