@@ -5,12 +5,22 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Web.Http;
 
 public partial class Program {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Logging.AddFilter("MaintenanceController", Loglevel.Debug);
+
+        var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var tracePath = Path.Join(path, $"Log_Airline_{DateTime.Now.ToString("yyyyMMdd-HHmm")}.txt");
+        Trace.Listeners.Add(new TextWriterTraceListener(System.IO.File.CreateText(tracePath)));
+        Trace.AutoFlush= true;
+
+       
 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, c =>

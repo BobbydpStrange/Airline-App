@@ -53,7 +53,8 @@ namespace AirlineManager.API.Controllers
         [HttpGet("planesdue")]
         public IEnumerable<PlanesDueForMaintenance> GetPlanesDue()
         {
-            _logger.LogInformation("Getting planes due in API");
+            _logger.LogDebug("Getting planes due in API");
+            _logger.LogWarning("Warning: Getting planes due in the API");
             return maintenanceApp.GetPlanesDue();
         }
 

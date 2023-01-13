@@ -12,12 +12,15 @@ namespace AirlineManager.API.Repository
         private readonly AirmanDbContext context;
         private readonly ILogger<AirmanDbContext> logger;
         private readonly ILogger<AirmanRepo> _logg;
+        private readonly ILogger _factoryLogger;
 
-        public AirmanRepo(AirmanDbContext context, ILogger<AirmanDbContext> logger, ILogger<AirmanRepo> logg)
+        public AirmanRepo(AirmanDbContext context, ILogger<AirmanDbContext> logger, ILogger<AirmanRepo> logg,
+            ILoggerFactory loggerFactory)
         {
             this.context = context;
             this.logger = logger;
             _logg = logg;
+            _factoryLogger = loggerFactory.CreateLogger("RepoLayer");
         }
 
         public async Task DeleteMaintenanceTypeAsync(int id)
@@ -40,9 +43,10 @@ namespace AirlineManager.API.Repository
 
         public IEnumerable<PlanesDueForMaintenance> GetPlanesDueForMaintenance()
         {
-            _logg.LogInformation("Getting planes due in logic.");
+            _logg.LogDebug("Getting planes due in logic.");
+            _factoryLogger.LogInformation("(F) Getting planes due");
            // logger.LogDebug("Planes Due for Maintenance");
-            logger.LogWarning("This request may take a while");
+            //logger.LogWarning("This request may take a while");
             return context.PlanesDueForMaintenances;
         }
 
