@@ -1,19 +1,37 @@
-﻿using AirlineManager.API.Data;
+﻿using AirlineManager.API;
+using AirlineManager.API.Data;
 using AirlineManager.API.Maintenance;
 using AirlineManager.API.Repository;
+using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Web.Http;
+using AirlineManager.API;
 
 public partial class Program {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Logging.AddFilter("MaintenanceController", Loglevel.Debug);
+        builder.Services.AddProblemDetails(opts =>
+        {
+            opts.IncludeExceptionDetails = (ctx, ex) => false;
+            opts.OnBeforeWriteDetails = (ctx, dtls) =>
+            {
+                if (dtls.Status == 500)
+                {
+                    dtls.Detail = "An error occurred in our API. Use the trace id when contacting us.";
+                }
+            };
+            opts.Rethrow<SqliteException>();
+            opts.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
+        });
+
+        //builder.Logging.AddFilter("MaintenanceController", Loglevel.Debug);
 
         var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var tracePath = Path.Join(path, $"Log_Airline_{DateTime.Now.ToString("yyyyMMdd-HHmm")}.txt");
@@ -79,6 +97,9 @@ public partial class Program {
         builder.Services.AddScoped<AirmanEmailService>(x=> new AirmanEmailService(builder.Configuration["EmailApi"]));
 
         var app = builder.Build();
+
+        app.UseMiddleware<CriticalExceptionMiddleware>();
+        app.UseProblemDetails();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

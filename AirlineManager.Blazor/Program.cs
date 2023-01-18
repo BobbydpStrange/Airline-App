@@ -14,6 +14,13 @@ using Blazored.Modal;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+    logging.MediaTypeOptions.AddText("applocation/javascript");
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
@@ -100,7 +107,17 @@ builder.Services.AddAuthentication(options =>
     }
 );
 
+var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+builder.Services.AddW3CLogging(opts =>
+{
+    opts.LoggingFields = Microsoft.AspNetCore.HttpLogging.W3CLoggingFields.All;
+    opts.FileSizeLimit = 5 * 1024 * 1024;
+    opts.RetainedFileCountLimit = 2;
+    opts.FileName = "Airline-W3C-UI";
+    opts.LogDirectory = Path.Combine(path, "logs");
+    opts.FlushInterval = TimeSpan.FromSeconds(2);
 
+});
 //Authenticated http client for the api
 
 builder.Services.AddHttpContextAccessor();
@@ -115,14 +132,16 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>()
 builder.Services.AddScoped<IMaintenanceDataService, MaintenanceService>();
 
 var app = builder.Build();
+app.UseHttpLogging();
+app.UseW3CLogging();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
+//if (!app.Environment.IsDevelopment())
+//{
     app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-}
+//}
 
 
 app.UseHttpsRedirection();

@@ -178,6 +178,7 @@
         }
         else
         {
+            throw new Exception("A problem has accured");
             var parameters = new ModalParameters()
             .Add("WasSuccess", false);
             Modal.Show<Success>("Something Went Wrong", parameters);
