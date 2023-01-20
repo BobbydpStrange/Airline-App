@@ -21,6 +21,10 @@ namespace AirlineManager.Blazor.Services
 
         public async Task <List<MaintenanceType>> GetMaintenanceTypes()
         {
+          /*  var userName = User.Identity?.IsAuthenticated ?? false? User.Identity.Name : "";
+            _logger.LogWarning(
+                "API failure: {fullPath} Response: {apiResponse}, Trace: {trace}, User: {user}", 
+                fullPath, (int) response.StatusCode, traceId, userName);*/
             return await client.GetFromJsonAsync<List<MaintenanceType>>(ENDPOINT + "maintenancetypes");
         }
 

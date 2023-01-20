@@ -14,10 +14,13 @@ namespace AirlineManager.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class MaintenanceController : ControllerBase
+    public partial class MaintenanceController : ControllerBase
     {
         private readonly ILogger<MaintenanceApp> _logger;
         private readonly MaintenanceApp maintenanceApp;
+
+        [LoggerMessage(AirlineEvents.GettingPlanes,LogLevel.Information, "SourceGenerated - Getting planes in API." )]
+        partial void LogGettingPlanes();
 
         public MaintenanceController(ILogger<MaintenanceApp> logger, MaintenanceApp maintenanceApp)
         {
@@ -53,7 +56,10 @@ namespace AirlineManager.API.Controllers
         [HttpGet("planesdue")]
         public IEnumerable<PlanesDueForMaintenance> GetPlanesDue()
         {
-            _logger.LogDebug("Getting planes due in API");
+            LogGettingPlanes();
+           //_logger.LogInformation(AirlineEvents.GettingPlanes,
+                //"Getting plaines in api for");
+            //_logger.LogDebug("Getting planes due in API");
             _logger.LogWarning("Warning: Getting planes due in the API");
             return maintenanceApp.GetPlanesDue();
         }

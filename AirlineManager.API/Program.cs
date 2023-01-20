@@ -11,6 +11,10 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Web.Http;
 using AirlineManager.API;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.Swagger;
 
 public partial class Program {
     private static void Main(string[] args)
@@ -30,6 +34,19 @@ public partial class Program {
             opts.Rethrow<SqliteException>();
             opts.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
         });
+        //******************************************************************
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+        builder.Services.AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.Authority = "https://demo.duendesoftware.com";
+                options.Audience = "api";
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    NameClaimType = "email"
+                };
+            });
+        //*******************************************************************
 
         //builder.Logging.AddFilter("MaintenanceController", Loglevel.Debug);
 
@@ -57,6 +74,7 @@ public partial class Program {
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
+        //builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerOptions>();
         builder.Services.AddSwaggerGen(option =>
         {
             option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
@@ -105,15 +123,21 @@ public partial class Program {
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(options =>
+            {
+                options.OAuthClientId("interactive.public.short");
+                options.OAuthAppName("Airline API");
+                options.OAuthUsePkce();
+            });
         }
 
         app.UseHttpsRedirection();
 
         app.UseAuthentication();
+        app.UseMiddleware<UserScopeMiddleware>();
         app.UseAuthorization();
 
-        app.MapControllers();
+        app.MapControllers().RequireAuthorization();
 
         app.Run();
     }

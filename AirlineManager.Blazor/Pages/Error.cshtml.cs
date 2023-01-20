@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AirlineManager.Blazor.Pages;
+[AllowAnonymous]
 
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 [IgnoreAntiforgeryToken]
@@ -26,5 +28,7 @@ public class ErrorModel : PageModel
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
         CurrentActivity = Activity.Current;
         TraceId = HttpContext.TraceIdentifier;
+        var userName = User.Identity?.IsAuthenticated ?? false ? User.Identity.Name : "";
+        _logger.LogWarning("User {userName} experienced an error.", userName);
     }
 }
