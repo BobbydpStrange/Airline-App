@@ -27,11 +27,16 @@ namespace AirlineManager.API
                 {
                     await _next(context);
                 }
+
+
             }
             else
             {
                 await _next(context);
             }
+
         }
+       /* [LoggerMessage(1, LogLevel.Information, "made it to the reservation room")]
+        partial void Log();*/
     }
 }

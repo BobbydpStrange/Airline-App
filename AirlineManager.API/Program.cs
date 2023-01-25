@@ -15,11 +15,26 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.Swagger;
+using Serilog;
+using Serilog.Exceptions;
 
 public partial class Program {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        /***********************************/
+        builder.Logging.ClearProviders();
+        //builder.Logging.AddJsonConsole();
+        //builder.Logging.AddDebug();
+        /*builder.Host.UseSerilog((context, loggerConfig) =>
+        {
+            loggerConfig.WriteTo
+            .Console()
+            .Enrich.WithExceptionDetails()
+            .WriteTo.Seq("http://localhost:5341");
+        });*/
+        //builder.Services.Addapplicationinsightstelemetry();
+        /***************************************/
 
         builder.Services.AddProblemDetails(opts =>
         {

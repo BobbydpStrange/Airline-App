@@ -11,8 +11,19 @@ using TokenHandler = AirlineManager.Blazor.Handlers.TokenHandler;
 using System.IdentityModel.Tokens.Jwt;
 using AirlineManager.Blazor.Services;
 using Blazored.Modal;
+using Serilog;
+using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+//builder.services.addapplicationinsightstelemetry();
+builder.Host.UseSerilog((context, loggerConfig) =>
+{
+    loggerConfig.WriteTo
+    .Console()
+    .Enrich.WithExceptionDetails()
+    .WriteTo.Seq("http://localhost:5341");
+});
 //**************************************************
 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 builder.Services.AddAuthentication(options =>

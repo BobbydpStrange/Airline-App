@@ -14,6 +14,7 @@ namespace AirlineManager.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+
     public partial class MaintenanceController : ControllerBase
     {
         private readonly ILogger<MaintenanceApp> _logger;
@@ -21,7 +22,7 @@ namespace AirlineManager.API.Controllers
 
         [LoggerMessage(AirlineEvents.GettingPlanes,LogLevel.Information, "SourceGenerated - Getting planes in API." )]
         partial void LogGettingPlanes();
-
+        
         public MaintenanceController(ILogger<MaintenanceApp> logger, MaintenanceApp maintenanceApp)
         {
             _logger = logger;
@@ -107,6 +108,11 @@ namespace AirlineManager.API.Controllers
         [HttpGet("person/{email}")]
         public async Task<Person> GetPersonByEmail(string email)
         {
+            /*_logger.LogLevel(EventId,
+                             Exception,
+                             MessageProcessingHandler,
+                             "Email: {e}",
+                             email);*/
             return await maintenanceApp.GetPersonByEmail(email);
         }
 
