@@ -13,9 +13,11 @@ using AirlineManager.Blazor.Services;
 using Blazored.Modal;
 using Serilog;
 using Serilog.Exceptions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
+//builder.Logging.AddJsonConsole();
 //builder.services.addapplicationinsightstelemetry();
 builder.Host.UseSerilog((context, loggerConfig) =>
 {
@@ -61,6 +63,10 @@ builder.Services.AddHttpLogging(logging =>
     logging.ResponseBodyLogLimit = 4096;
 });
 // Add services to the container.
+//______________________________________________
+builder.Services.AddHealthChecks()
+    .AddIdentityServer(new Uri("https://demo.duendesoftware.com"), failureStatus: HealthStatus.Degraded);
+//_______________________________________________
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<WeatherForecastService>();
@@ -191,8 +197,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapRazorPages().RequireAuthorization();
+//______________________________________-
+app.MapHealthChecks("health").AllowAnonymous();
+//________________________________________-
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 

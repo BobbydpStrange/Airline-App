@@ -26,16 +26,19 @@ public partial class Program {
         builder.Logging.ClearProviders();
         //builder.Logging.AddJsonConsole();
         //builder.Logging.AddDebug();
-        /*builder.Host.UseSerilog((context, loggerConfig) =>
+        builder.Host.UseSerilog((context, loggerConfig) =>
         {
             loggerConfig.WriteTo
             .Console()
             .Enrich.WithExceptionDetails()
             .WriteTo.Seq("http://localhost:5341");
-        });*/
+        });
         //builder.Services.Addapplicationinsightstelemetry();
         /***************************************/
 
+        //______________________________________________
+        builder.Services.AddHealthChecks();
+        //_______________________________________________
         builder.Services.AddProblemDetails(opts =>
         {
             opts.IncludeExceptionDetails = (ctx, ex) => false;
@@ -153,6 +156,10 @@ public partial class Program {
         app.UseAuthorization();
 
         app.MapControllers().RequireAuthorization();
+
+        //______________________________________-
+        app.MapHealthChecks("health").AllowAnonymous();
+        //________________________________________-
 
         app.Run();
     }
