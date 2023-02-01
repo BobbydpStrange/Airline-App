@@ -31,6 +31,7 @@ public partial class Program {
             loggerConfig.WriteTo
             .Console()
             .Enrich.WithExceptionDetails()
+            .Enrich.With<ActivityEnricher>()
             .WriteTo.Seq("http://localhost:5341");
         });
         //builder.Services.Addapplicationinsightstelemetry();
@@ -38,6 +39,7 @@ public partial class Program {
 
         //______________________________________________
         builder.Services.AddHealthChecks();
+          // .AddDbContextCheck<context>();
         //_______________________________________________
         builder.Services.AddProblemDetails(opts =>
         {

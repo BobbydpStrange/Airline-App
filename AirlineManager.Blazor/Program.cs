@@ -14,6 +14,8 @@ using Blazored.Modal;
 using Serilog;
 using Serilog.Exceptions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog.Enrichers.Span;
+using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -24,8 +26,17 @@ builder.Host.UseSerilog((context, loggerConfig) =>
     loggerConfig.WriteTo
     .Console()
     .Enrich.WithExceptionDetails()
+    .Enrich.With<ActivityEnricher>()
     .WriteTo.Seq("http://localhost:5341");
 });
+/*builder.Services.AddOpenTelemetryTracing(builder =>
+{
+    builder.SetResourceBuilder(
+        ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplciationName))
+    .AddAspNetCoreInstrumentation()
+    .AddHttpClientInstrumentation()
+    .AddOtlpExporter(opts => { opts.Endpoint = new Uri("http://localhost:4317"); });
+});*/
 //**************************************************
 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 builder.Services.AddAuthentication(options =>
